@@ -1,7 +1,11 @@
 threading:
   count: 4
 
+queue:
+  count: 4
+  size: 5
+
 visualizer:
-  title: "Processing"
-  x_label: "Process ID"
+  title: "Threads and Queues Visualisation"
+  title_font_size: 14
   y_label: "Time (s)"
