@@ -9,3 +9,5 @@ visualizer:
   title: "Threads and Queues Visualisation"
   title_font_size: 14
   y_label: "Time (s)"
+  y_lim: [0, 100]
+  y_ticks: [0, 10, 50, 100]
