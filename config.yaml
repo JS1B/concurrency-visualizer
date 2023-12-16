@@ -1,0 +1,7 @@
+threading:
+  count: 4
+
+visualizer:
+  title: "Processing"
+  x_label: "Process ID"
+  y_label: "Time (s)"
