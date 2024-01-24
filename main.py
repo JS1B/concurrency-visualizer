@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, TextBox
 import time
 
-from src.Controller import Controller
-from src.WaitingQueue import WaitingQueue
+from src.ProcessingUnit import ProcessingUnitManager
+from src.WaitingQueue import WaitingQueue, QueueVisualizer
 from src.ProgressBar import ProgressBar
 import src.utils as utils
 
@@ -15,6 +15,8 @@ config = utils.load_config('config.yaml')
 # Set up the plots
 fig = plt.figure('Concurrent programming', layout='constrained')
 fig.suptitle(config['visualizer']['title'], fontsize=config['visualizer']['title_font_size'])
+
+
 axd = fig.subplot_mosaic(
     [
         ['progress_bar', 'waiting_queue'],
@@ -28,9 +30,8 @@ axd = fig.subplot_mosaic(
 progressBarAxis = ProgressBar(axd['progress_bar'], 'Thread', config['threads']['count'])
 
 # Set up the waiting queue axis
-waitingQueueAxis = WaitingQueue(axd['waiting_queue'], (config['queue']['size'], config['queue']['length']))
-
-# waitingQueueAxis.set_axis_off()
+waiting_queue = WaitingQueue(config['queue']['length'], config['queue']['size'])
+waiting_queue_visualizer = QueueVisualizer(axd['waiting_queue'], waiting_queue)
 
 # Set up the controls axis
 controlsAxis = axd['controls']
@@ -52,7 +53,7 @@ addButton = Button(addButtonAxis, 'Add to queue')
 button_size.x0 += button_size.width + button_spacing/2
 button_size.width /= 2
 textBoxAxis = fig.add_axes(list(button_size))
-textBox = TextBox(textBoxAxis, '', initial='Size', textalignment='center')
+textBox = TextBox(textBoxAxis, '', initial='1', textalignment='center')
 
 def on_click(event):
     try:
@@ -62,21 +63,33 @@ def on_click(event):
         return
     else:
         textBox.color = 'white'
-    waitingQueueAxis.append_to_queue(val)
+    waiting_queue.append_to_queue(val)
+    client = waiting_queue.clients_queue[-1]
+    waiting_queue_visualizer.append_to_queue(client)
+
     
 addButton.on_clicked(on_click)
 # textBox.label.set_visible(False)
 
-controller = Controller(progressBarAxis, waitingQueueAxis)
+def plot_update_listener(id, value):
+    progressBarAxis.set_bar(id, value)
+
+def finished_thread_listener():
+    client = waiting_queue.remove_from_queue()
+    if client:
+        item = client.items.pop(0)
+        manager.add_task(item.size)
+
+manager = ProcessingUnitManager(config['threads']['count'], listener_callback=plot_update_listener)
 
 plt.show(block=False)
+manager.start()
 
 while plt.fignum_exists(fig.number):
-
-    controller.process()
-
     # Update the plot
     fig.canvas.draw_idle()
 
-    # Sleep for the remaining time
+    # Sleep for some time
     plt.pause(0.016)
+
+manager.stop(force=True)

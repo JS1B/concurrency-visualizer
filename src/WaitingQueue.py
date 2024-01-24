@@ -1,75 +1,69 @@
 from matplotlib import patches
 from matplotlib.axes import Axes
-import random
 
-from src.Client import ClientFactory, Client
+from src.Client import ClientFactory, ClientVisualizer, Client
 
 class WaitingQueue:
-    def __init__(self, ax: Axes, xySize: tuple, maxProcessingTime: float=100):
-        if len(xySize) != 2:
-            raise ValueError('xySize must be a tuple of length 2')
-        
-        ax.set_title('Waiting Queue')
-
-        ax.set_ylim(-int(abs(xySize[1])), 0)
-        ax.autoscale(False)
-        ax.set_yticks([])
-
-        ax.set_xlim(0, int(abs(xySize[0])))
-        ax.set_xticks([])
-
-        ax.axis('off')
-        self.ax = ax
-
-        self.queue = []
-        self.clientId = 0
-
-        self.element_height = 1
-        self.element_width = 1
-
-        self.colors = ['white', 'red', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
-        self.clientFactory = ClientFactory(maxProcessingTime)
+    def __init__(self, max_clients: int, max_items_per_client: int, maxProcessingTime: float=100):
+        self.clients_queue = []
+        self.client_factory = ClientFactory(maxProcessingTime)
+        self.max_clients = max_clients
+        self.max_items_per_client = max_items_per_client
         
     def append_to_queue(self, value: int):
-        if value < self.ax.get_xlim()[0]+1:
-            value = int(self.ax.get_xlim()[0])+1
+        if len(self.clients_queue) >= self.max_clients:
+            return
+        
+        client = self.client_factory.create(value)
+        self.clients_queue.append(client)
+        print(self.clients_queue)
+    
+    def remove_from_queue(self, client_id):
+        client = next((c for c in self.clients_queue if c.id == client_id), None)
+        if client:
+            self.clients_queue.remove(client)
+        return client
+        
 
-        if value > self.ax.get_xlim()[1]:
-            value = int(self.ax.get_xlim()[1])
+class QueueVisualizer:
+    def __init__(self, ax: Axes, waiting_queue: WaitingQueue):
+        self.ax = ax
+        self.waiting_queue = waiting_queue
+        
+        self.configure_axes()
 
-        client = self.clientFactory.create(value)
+        self.client_visualizers = []
 
-        self.queue.append(client)
-        y = len(self.queue) * -self.element_height
+        self.colors = ['white', 'red', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
+    
+    def configure_axes(self):
+        xySize = self.waiting_queue.max_items_per_client, self.waiting_queue.max_clients
+        self.ax.set_title('Waiting Queue')
+
+        self.ax.set_ylim(-int(abs(xySize[1])), 0)
+        self.ax.autoscale(False)
+        # self.ax.set_yticks([])
+
+        self.ax.set_xlim(0, int(abs(xySize[0])))
+        # self.ax.set_xticks([])
+
+        # self.ax.axis('off')
+        
+    def append_to_queue(self, client: Client):
+        cv = ClientVisualizer(self.ax)
+        y = -len(self.waiting_queue.clients_queue)
 
         if y < self.ax.get_ylim()[0]:
             return
-
-        c = self.colors[y % len(self.colors)]
-        for i, item in enumerate(client.items):
-            self.add_box_with_text(i, y, self.element_width, self.element_height, f'{client.id}: {item}', color=c)
+        
+        cv.add_client(client, y0=y)
+        self.client_visualizers.append(cv)
     
-    def pop_from_queue(self):
-        if len(self.queue) == 0:
-            return
-        
-        client = self.queue.pop(0)
-        return client
-        # y = len(self.queue) * -self.element_height
-
-        # if y < self.ax.get_ylim()[0]:
-        #     return
-
-        # for i, val in enumerate(client.values):
-        #     self.add_box_with_text(i, y, self.element_width, self.element_height, f'{client.name}: {val}')
-
-    def add_box_with_text(self, x, y, width, height, text, color='white'):
-        # Create a rectangle patch and add it to the axis
-        rect = patches.Rectangle((x, y), width, height, linewidth=1, edgecolor='black', facecolor=color)
-        self.ax.add_patch(rect)
-        
-        # Add text at the center of the rectangle
-        text_x = x + width / 2
-        text_y = y + height / 2
-        self.ax.text(text_x, text_y, text, ha='center', va='center')
-        
+    def remove_client(self, client_id):
+        client = self.waiting_queue.remove_from_queue(client_id)
+        if client:
+            for rect in client.rects:
+                rect.remove()
+            for text in client.texts:
+                text.remove()
+            self.ax.figure.canvas.draw()
