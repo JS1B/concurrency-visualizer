@@ -4,7 +4,7 @@ import time
 from queue import Queue, Empty
 
 class ProcessingUnit:
-    def __init__(self, id: int, listener_callback=None):
+    def __init__(self, id: int, listener_callback=None, idle_callback=None):
         self.id = id
 
         self.listener_callback = listener_callback
@@ -13,6 +13,8 @@ class ProcessingUnit:
         self.thread = threading.Thread(target=self.process, daemon=True)
 
         self.stop_signal = threading.Event()
+
+        self.idle_callback = idle_callback
 
     def start(self):
         if not self.thread.is_alive():
@@ -54,8 +56,9 @@ class ProcessingUnit:
 
 
 class ProcessingUnitManager:
-    def __init__(self, count: int, listener_callback=None):
+    def __init__(self, count: int, listener_callback=None, work_assignment_callback=None):
         self.units = [ProcessingUnit(i, listener_callback) for i in range(count)]
+        self.work_assignment_callback = work_assignment_callback
 
     def start(self):
         for unit in self.units:

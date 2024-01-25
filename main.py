@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('TkAgg')  # Use the Tkinter backend - better for threading
 import matplotlib.pyplot as plt 
-from matplotlib.widgets import Button, TextBox
+from matplotlib.widgets import Button, Slider
 import time
 
 from src.ProcessingUnit import ProcessingUnitManager
@@ -15,7 +15,6 @@ config = utils.load_config('config.yaml')
 # Set up the plots
 fig = plt.figure('Concurrent programming', layout='constrained')
 fig.suptitle(config['visualizer']['title'], fontsize=config['visualizer']['title_font_size'])
-
 
 axd = fig.subplot_mosaic(
     [
@@ -44,7 +43,7 @@ button_size = utils.PositionType(
     width=controlsAxis.get_position().width/2,
     height=controlsAxis.get_position().height
 )
-button_spacing = 0.04
+button_spacing = 0.1
 
 button_size.x0 -= button_spacing/2
 addButtonAxis = fig.add_axes(list(button_size))
@@ -52,35 +51,32 @@ addButton = Button(addButtonAxis, 'Add to queue')
 
 button_size.x0 += button_size.width + button_spacing/2
 button_size.width /= 2
-textBoxAxis = fig.add_axes(list(button_size))
-textBox = TextBox(textBoxAxis, '', initial='1', textalignment='center')
+sliderAxis = fig.add_axes(list(button_size))
+slider = Slider(sliderAxis, 'Size', 1, 3, valinit=1, valstep=1)
 
-def on_click(event):
-    try:
-        val = int(float(textBox.text))
-    except ValueError:
-        textBox.color = 'red'
-        return
-    else:
-        textBox.color = 'white'
-    waiting_queue.append_to_queue(val)
+# textBoxAxis = fig.add_axes(list(button_size))
+# textBox = TextBox(textBoxAxis, '', initial='1', textalignment='center')
+
+
+# Configure the behavior
+def add_client_callback(event):
+    waiting_queue.append_to_queue(slider.val)
     client = waiting_queue.clients_queue[-1]
     waiting_queue_visualizer.append_to_queue(client)
-
     
-addButton.on_clicked(on_click)
+addButton.on_clicked(add_client_callback)
 # textBox.label.set_visible(False)
 
 def plot_update_listener(id, value):
     progressBarAxis.set_bar(id, value)
 
-def finished_thread_listener():
+def assign_to_thread_listener():
     client = waiting_queue.remove_from_queue()
     if client:
         item = client.items.pop(0)
         manager.add_task(item.size)
 
-manager = ProcessingUnitManager(config['threads']['count'], listener_callback=plot_update_listener)
+manager = ProcessingUnitManager(config['threads']['count'], listener_callback=plot_update_listener, work_assignment_callback=assign_to_thread_listener)
 
 plt.show(block=False)
 manager.start()

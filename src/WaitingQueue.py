@@ -4,18 +4,24 @@ from matplotlib.axes import Axes
 from src.Client import ClientFactory, ClientVisualizer, Client
 
 class WaitingQueue:
-    def __init__(self, max_clients: int, max_items_per_client: int, maxProcessingTime: float=100):
+    def __init__(self, max_clients: int, max_items_per_client: int, maxProcessingTime: float=100, on_new_client_callback=None):
         self.clients_queue = []
         self.client_factory = ClientFactory(maxProcessingTime)
         self.max_clients = max_clients
         self.max_items_per_client = max_items_per_client
+
+        self.on_new_client_callback = on_new_client_callback
         
     def append_to_queue(self, value: int):
         if len(self.clients_queue) >= self.max_clients:
             return
         
+        was_empty = len(self.clients_queue) == 0
         client = self.client_factory.create(value)
         self.clients_queue.append(client)
+        if was_empty and self.on_new_client_callback:
+            self.on_new_client_callback()
+
         print(self.clients_queue)
     
     def remove_from_queue(self, client_id):
