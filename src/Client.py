@@ -17,10 +17,10 @@ class Item:
 
 
 class Client:
-    def __init__(self, id: int, itemsCount: int, maxProcessingTime: float=1):
+    def __init__(self, id: int, itemsCount: int, maxProcessingTime: float=1, *, minProcessingTime: float=1):
         self.id = id
 
-        self.items = [Item(random.random()*maxProcessingTime) for _ in range(itemsCount)]
+        self.items = [Item(random.random()*(maxProcessingTime-minProcessingTime)+minProcessingTime) for _ in range(itemsCount)]
 
     def get_item(self):
         # Return the smallest item
