@@ -1,6 +1,6 @@
 from matplotlib.axes import Axes
 
-from src.Client import ClientFactory, ClientVisualizer, Client
+from src.Client import ClientFactory, ClientVisualizer, Client, Item
 
 class WaitingQueue:
     def __init__(self, max_clients: int, max_items_per_client: int, maxProcessingTime: float=100, *, on_new_client_callback=None, on_item_removal_callback=None, on_first_item_added_callback=None):
@@ -52,9 +52,11 @@ class WaitingQueue:
         if len(client.items) == 0:
             self.clients_queue.remove(client)
 
+        print(self.clients_queue)
+
         # Invoke callback with client and item
         if self.on_item_removal_callback:
-            self.on_item_removal_callback()
+            self.on_item_removal_callback(client, item)
         return item
         
 
@@ -62,7 +64,7 @@ class QueueVisualizer:
     def __init__(self, ax: Axes, waiting_queue: WaitingQueue):
         self.ax = ax
         
-        waiting_queue.set_on_item_removal_callback(self.redraw)
+        waiting_queue.set_on_item_removal_callback(self.remove_from_queue)
         waiting_queue.set_on_new_client_callback(self.append_to_queue)
         self.waiting_queue = waiting_queue
         
@@ -84,7 +86,7 @@ class QueueVisualizer:
         # self.ax.axis('off')
         
     def append_to_queue(self, client: Client):
-        cv = ClientVisualizer(self.ax)
+        new_cv = ClientVisualizer(self.ax)
         
         # Get the y position of the first blank space #TODO
         y = -1
@@ -96,14 +98,18 @@ class QueueVisualizer:
         if y < self.ax.get_ylim()[0]:
             return
         
-        cv.add_client(client, y0=y)
-        self.client_visualizers.append(cv)
+        new_cv.add_client(client, y0=y)
+        self.client_visualizers.append(new_cv)
+
+    def remove_from_queue(self, client: Client, item: Item):
+        for cv in self.client_visualizers:
+            if cv.client == client:
+                if len(cv.client.items) == 0:
+                    self.redraw()
+                    self.client_visualizers.remove(cv)
+                break
+        self.redraw()
 
     def redraw(self):
         for cv in self.client_visualizers:
             cv.redraw()
-
-        # Remove every client visualizer that has no clients
-        print(f"Cvs: {self.client_visualizers}")
-        # self.client_visualizers = [cv for cv in self.client_visualizers if len(cv.client.items) > 0]
-        # print(f"Cvs: {self.client_visualizers}")

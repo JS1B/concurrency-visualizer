@@ -43,11 +43,11 @@ class ProcessingUnit:
                 continue  # No item to process, check if still processing and try again
 
             while value > 0 and not self.stop_signal.is_set():
-                time.sleep(0.1)  # Simulate work by sleeping for 1 second
+                time.sleep(0.1)  # Simulate work by sleeping for .1 second
                 value = max(value - 0.1, 0)  # Update value
 
                 if self.listener_callback:
-                    self.listener_callback(self.id, value)  # Notify listener when processing is complete
+                    self.listener_callback(self.id, value)  # Notify listener when processing
             
             print(f"Processing unit {self.id} finished processing.")
 

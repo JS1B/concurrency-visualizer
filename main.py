@@ -62,7 +62,6 @@ def add_client_callback(event):
     waiting_queue.append_to_queue(slider.val)
     
 addButton.on_clicked(add_client_callback)
-# textBox.label.set_visible(False)
 
 def plot_update_listener(id, value):
     progressBarAxis.set_bar(id, value)
@@ -80,6 +79,6 @@ while plt.fignum_exists(fig.number):
     fig.canvas.draw_idle()
 
     # Sleep for some time
-    plt.pause(0.5) #.016 for 60 fps
+    plt.pause(0.2) #.016 for 60 fps
 
 manager.stop(force=True)
