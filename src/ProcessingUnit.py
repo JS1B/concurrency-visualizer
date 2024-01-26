@@ -73,11 +73,11 @@ class ProcessingUnitManager:
             unit.stop(force)
 
     def assign_to_thread(self, unit: ProcessingUnit):
-        print(f"Assigning to unit {unit.id}.")
+        # print(f"Assigning to unit {unit.id}.")
         item = self.waiting_queue.get_item_from_queue()
 
         if item:
-            unit.add_task(item.size)
+            unit.add_task(item.time_to_process)
 
     def assign_to_thread_listener(self):
         for unit in self.units:

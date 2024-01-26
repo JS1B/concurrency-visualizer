@@ -1,30 +1,40 @@
 from matplotlib.axes import Axes
 from matplotlib import patches
 
-import random
+import random, math, time
 
 import src.utils as utils
 
 class Item:
-    def __init__(self, size: float):
-        self.size = size
+    def __init__(self, time_to_process: float):
+        self.time_to_process = time_to_process
+        self.file_size = math.pow(time_to_process, 2)
 
     def __str__(self):
-        return f'{self.size:.1f}'
+        size_in_kb = self.file_size
+        units = ["KB", "MB", "GB", "TB"]  # Add more units if needed
+        index = 0
+
+        while size_in_kb >= 1024 and index < len(units) - 1:
+            size_in_kb /= 1024
+            index += 1
+
+        return f"{size_in_kb:.1f} {units[index]}"
 
     def __repr__(self):
         return str(self)
 
 
 class Client:
-    def __init__(self, id: int, itemsCount: int, maxProcessingTime: float=1, *, minProcessingTime: float=1):
+    def __init__(self, id: int, itemsCount: int, maxProcessingTime: float=10, *, minProcessingTime: float=1.5):
         self.id = id
 
         self.items = [Item(random.random()*(maxProcessingTime-minProcessingTime)+minProcessingTime) for _ in range(itemsCount)]
+        self.start_time = time.time()
 
     def get_item(self):
         # Return the smallest item
-        return min(self.items, key=lambda x: x.size)
+        return min(self.items, key=lambda x: x.time_to_process), self.start_time
     
     def remove_item(self, item: Item):
         self.items.remove(item)

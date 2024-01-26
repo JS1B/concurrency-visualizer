@@ -1,11 +1,11 @@
 debug: true
 
 threads:
-  count: 1
+  count: 4
 
 queue:
   length: 10
-  size: 3
+  size: 4
 
 visualizer:
   title: "Threads and Queues Visualisation"

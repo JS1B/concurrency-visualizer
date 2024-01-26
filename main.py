@@ -1,5 +1,7 @@
 import matplotlib
 matplotlib.use('TkAgg')  # Use the Tkinter backend - better for threading
+matplotlib.rcParams['figure.dpi'] = 80
+
 import matplotlib.pyplot as plt 
 from matplotlib.widgets import Button, Slider
 import time
@@ -13,7 +15,7 @@ import src.utils as utils
 config = utils.load_config('config.yaml')
 
 # Set up the plots
-fig = plt.figure('Concurrent programming', layout='constrained')
+fig = plt.figure('Concurrent programming', layout='constrained', figsize=(10, 6))
 fig.suptitle(config['visualizer']['title'], fontsize=config['visualizer']['title_font_size'])
 
 axd = fig.subplot_mosaic(
@@ -29,7 +31,7 @@ axd = fig.subplot_mosaic(
 progressBarAxis = ProgressBar(axd['progress_bar'], 'Thread', config['threads']['count'])
 
 # Set up the waiting queue axis
-waiting_queue = WaitingQueue(config['queue']['length'], config['queue']['size'], 10)
+waiting_queue = WaitingQueue(config['queue']['length'], config['queue']['size'], 100)
 waiting_queue_visualizer = QueueVisualizer(axd['waiting_queue'], waiting_queue)
 
 # Set up the controls axis
@@ -52,10 +54,7 @@ addButton = Button(addButtonAxis, 'Add to queue')
 button_size.x0 += button_size.width + button_spacing/2
 button_size.width /= 2
 sliderAxis = fig.add_axes(list(button_size))
-slider = Slider(sliderAxis, 'Size', 1, 3, valinit=1, valstep=1)
-
-# textBoxAxis = fig.add_axes(list(button_size))
-# textBox = TextBox(textBoxAxis, '', initial='1', textalignment='center')
+slider = Slider(sliderAxis, 'Size', 1, config['queue']['size'], valinit=config['queue']['size']//2, valstep=1)
 
 # Configure the behavior
 def add_client_callback(event):

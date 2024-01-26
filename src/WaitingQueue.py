@@ -42,7 +42,7 @@ class WaitingQueue:
         if len(self.clients_queue) == 0:
             return None
         
-        client = min(self.clients_queue, key=lambda c: c.get_item().size)
+        client = min(self.clients_queue, key=lambda c: c.get_item().time_to_process)
 
         # Remove item from client
         item = client.get_item()
@@ -78,10 +78,10 @@ class QueueVisualizer:
 
         self.ax.set_ylim(-int(abs(xySize[1])), 0)
         self.ax.autoscale(False)
-        # self.ax.set_yticks([])
+        self.ax.set_yticks([])
 
         self.ax.set_xlim(0, int(abs(xySize[0])))
-        # self.ax.set_xticks([])
+        self.ax.set_xticks([])
 
         # self.ax.axis('off')
         
@@ -111,9 +111,6 @@ class QueueVisualizer:
         if not gap_found and sorted_visualizers:
             y = sorted_visualizers[-1].position.y0 - sorted_visualizers[-1].position.height
 
-        # 'y' now holds the y-coordinate of the first available space
-
-
         if y < self.ax.get_ylim()[0]:
             return
         
@@ -128,7 +125,7 @@ class QueueVisualizer:
                     self.client_visualizers.remove(cv)
                 break
         self.redraw()
-        print(f"Cvs: {self.client_visualizers}")
+        # print(f"Cvs: {self.client_visualizers}")
 
     def redraw(self):
         for cv in self.client_visualizers:
