@@ -88,12 +88,31 @@ class QueueVisualizer:
     def append_to_queue(self, client: Client):
         new_cv = ClientVisualizer(self.ax)
         
-        # Get the y position of the first blank space #TODO
+        # Get the y position of the first blank space 
+        # Assuming the initial y-coordinate for the top of the area is -1 (adjust as per your coordinate system)
         y = -1
-        for cv in self.client_visualizers:
-            y = min(y, cv.position.y0 - cv.position.height)
-            if cv.position.y0 + cv.position.height < y:
+        gap_found = False
+
+        # Sort the visualizers based on their y-positions in descending order (from top to bottom)
+        sorted_visualizers = sorted(self.client_visualizers, key=lambda cv: cv.position.y0, reverse=True)
+
+        # Check for the first gap
+        for i, cv in enumerate(sorted_visualizers):
+            # Calculate the next expected y-position (current y0 - height of the current patch)
+            next_y = cv.position.y0 - cv.position.height
+
+            # Check if the next visualizer is not at the expected next_y position
+            if i + 1 < len(sorted_visualizers) and sorted_visualizers[i + 1].position.y0 != next_y:
+                y = next_y
+                gap_found = True
                 break
+
+        # If no gap is found, place the next patch below the last one
+        if not gap_found and sorted_visualizers:
+            y = sorted_visualizers[-1].position.y0 - sorted_visualizers[-1].position.height
+
+        # 'y' now holds the y-coordinate of the first available space
+
 
         if y < self.ax.get_ylim()[0]:
             return
@@ -109,6 +128,7 @@ class QueueVisualizer:
                     self.client_visualizers.remove(cv)
                 break
         self.redraw()
+        print(f"Cvs: {self.client_visualizers}")
 
     def redraw(self):
         for cv in self.client_visualizers:
