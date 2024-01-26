@@ -8,7 +8,7 @@ import src.utils as utils
 class Item:
     def __init__(self, time_to_process: float):
         self.time_to_process = time_to_process
-        self.file_size = math.pow(time_to_process, 2)
+        self.file_size = math.pow(time_to_process, 3)
 
     def __str__(self):
         size_in_kb = self.file_size
@@ -34,7 +34,7 @@ class Client:
 
     def get_item(self):
         # Return the smallest item
-        return min(self.items, key=lambda x: x.time_to_process), self.start_time
+        return min(self.items, key=lambda x: x.time_to_process)
     
     def remove_item(self, item: Item):
         self.items.remove(item)

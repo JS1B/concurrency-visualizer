@@ -74,7 +74,23 @@ class ProcessingUnitManager:
 
     def assign_to_thread(self, unit: ProcessingUnit):
         # print(f"Assigning to unit {unit.id}.")
-        item = self.waiting_queue.get_item_from_queue()
+        clients = self.waiting_queue.get_clients_from_queue()
+        if not clients:
+            return
+        
+        # The smaller the value, the higher the priority
+        client_item = [(client, client.get_item()) for client in clients]
+
+        # Calculate the priority based on the item processing time and the client start time
+        # The longer the waiting time, the higher the priority
+        # The smaller the item processing time, the higher the priority
+        client_item = [(client, item, item.time_to_process / (time.time() - client.start_time)) for client, item in client_item]
+
+        # Get the client with the highest priority
+        client, item, _ = min(client_item, key=lambda x: x[2])
+
+        # Remove item from client
+        self.waiting_queue.remove_from_queue(client, item)
 
         if item:
             unit.add_task(item.time_to_process)

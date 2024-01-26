@@ -1,10 +1,10 @@
 import matplotlib
 matplotlib.use('TkAgg')  # Use the Tkinter backend - better for threading
 matplotlib.rcParams['figure.dpi'] = 80
+matplotlib.rcParams['toolbar'] = 'None'
 
 import matplotlib.pyplot as plt 
 from matplotlib.widgets import Button, Slider
-import time
 
 from src.ProcessingUnit import ProcessingUnitManager
 from src.WaitingQueue import WaitingQueue, QueueVisualizer

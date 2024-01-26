@@ -37,15 +37,7 @@ class WaitingQueue:
         if was_empty and self.on_first_item_added_callback:
             self.on_first_item_added_callback()
 
-    def get_item_from_queue(self):
-        # Get the client with the smallest item
-        if len(self.clients_queue) == 0:
-            return None
-        
-        client = min(self.clients_queue, key=lambda c: c.get_item().time_to_process)
-
-        # Remove item from client
-        item = client.get_item()
+    def remove_from_queue(self, client: Client, item: Item):
         client.remove_item(item)
 
         # Remove client if empty
@@ -54,10 +46,15 @@ class WaitingQueue:
 
         print(self.clients_queue)
 
-        # Invoke callback with client and item
         if self.on_item_removal_callback:
             self.on_item_removal_callback(client, item)
-        return item
+
+    def get_clients_from_queue(self):
+        # Get the client with the smallest item
+        if len(self.clients_queue) == 0:
+            return None
+        
+        return self.clients_queue
         
 
 class QueueVisualizer:
