@@ -1,5 +1,7 @@
+debug: true
+
 threads:
-  count: 4
+  count: 1
 
 queue:
   length: 10

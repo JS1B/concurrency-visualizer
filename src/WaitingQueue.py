@@ -1,46 +1,74 @@
-from matplotlib import patches
 from matplotlib.axes import Axes
 
 from src.Client import ClientFactory, ClientVisualizer, Client
 
 class WaitingQueue:
-    def __init__(self, max_clients: int, max_items_per_client: int, maxProcessingTime: float=100, on_new_client_callback=None):
+    def __init__(self, max_clients: int, max_items_per_client: int, maxProcessingTime: float=100, *, on_new_client_callback=None, on_item_removal_callback=None, on_first_item_added_callback=None):
         self.clients_queue = []
         self.client_factory = ClientFactory(maxProcessingTime)
         self.max_clients = max_clients
         self.max_items_per_client = max_items_per_client
 
         self.on_new_client_callback = on_new_client_callback
+        self.on_item_removal_callback = on_item_removal_callback
+        self.on_first_item_added_callback = on_first_item_added_callback
         
-    def append_to_queue(self, value: int):
+    def set_on_new_client_callback(self, callback):
+        self.on_new_client_callback = callback
+
+    def set_on_item_removal_callback(self, callback):
+        self.on_item_removal_callback = callback
+
+    def set_on_first_item_added_callback(self, callback):
+        self.on_first_item_added_callback = callback
+
+    def append_to_queue(self, itemsCount: int):
         if len(self.clients_queue) >= self.max_clients:
             return
         
         was_empty = len(self.clients_queue) == 0
-        client = self.client_factory.create(value)
+        client = self.client_factory.create(itemsCount)
         self.clients_queue.append(client)
-        if was_empty and self.on_new_client_callback:
-            self.on_new_client_callback()
-
         print(self.clients_queue)
-    
-    def remove_from_queue(self, client_id):
-        client = next((c for c in self.clients_queue if c.id == client_id), None)
-        if client:
+
+        if self.on_new_client_callback:
+            self.on_new_client_callback(client)
+
+        if was_empty and self.on_first_item_added_callback:
+            self.on_first_item_added_callback()
+
+    def get_item_from_queue(self):
+        # Get the client with the smallest item
+        if len(self.clients_queue) == 0:
+            return None
+        
+        client = min(self.clients_queue, key=lambda c: c.get_item().size)
+
+        # Remove item from client
+        item = client.get_item()
+        client.remove_item(item)
+
+        # Remove client if empty
+        if len(client.items) == 0:
             self.clients_queue.remove(client)
-        return client
+
+        # Invoke callback with client and item
+        if self.on_item_removal_callback:
+            self.on_item_removal_callback()
+        return item
         
 
 class QueueVisualizer:
     def __init__(self, ax: Axes, waiting_queue: WaitingQueue):
         self.ax = ax
+        
+        waiting_queue.set_on_item_removal_callback(self.redraw)
+        waiting_queue.set_on_new_client_callback(self.append_to_queue)
         self.waiting_queue = waiting_queue
         
         self.configure_axes()
 
         self.client_visualizers = []
-
-        self.colors = ['white', 'red', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
     
     def configure_axes(self):
         xySize = self.waiting_queue.max_items_per_client, self.waiting_queue.max_clients
@@ -57,19 +85,25 @@ class QueueVisualizer:
         
     def append_to_queue(self, client: Client):
         cv = ClientVisualizer(self.ax)
-        y = -len(self.waiting_queue.clients_queue)
+        
+        # Get the y position of the first blank space #TODO
+        y = -1
+        for cv in self.client_visualizers:
+            y = min(y, cv.position.y0 - cv.position.height)
+            if cv.position.y0 + cv.position.height < y:
+                break
 
         if y < self.ax.get_ylim()[0]:
             return
         
         cv.add_client(client, y0=y)
         self.client_visualizers.append(cv)
-    
-    def remove_client(self, client_id):
-        client = self.waiting_queue.remove_from_queue(client_id)
-        if client:
-            for rect in client.rects:
-                rect.remove()
-            for text in client.texts:
-                text.remove()
-            self.ax.figure.canvas.draw()
+
+    def redraw(self):
+        for cv in self.client_visualizers:
+            cv.redraw()
+
+        # Remove every client visualizer that has no clients
+        print(f"Cvs: {self.client_visualizers}")
+        # self.client_visualizers = [cv for cv in self.client_visualizers if len(cv.client.items) > 0]
+        # print(f"Cvs: {self.client_visualizers}")

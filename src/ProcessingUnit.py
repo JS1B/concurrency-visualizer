@@ -2,6 +2,7 @@ import threading
 import time
 
 from queue import Queue, Empty
+from src.WaitingQueue import WaitingQueue
 
 class ProcessingUnit:
     def __init__(self, id: int, listener_callback=None, idle_callback=None):
@@ -49,6 +50,9 @@ class ProcessingUnit:
                     self.listener_callback(self.id, value)  # Notify listener when processing is complete
             
             print(f"Processing unit {self.id} finished processing.")
+
+            if self.idle_callback:
+                self.idle_callback()
             self.queue.task_done()  # Mark the task as done
             
     def add_task(self, value):
@@ -56,9 +60,9 @@ class ProcessingUnit:
 
 
 class ProcessingUnitManager:
-    def __init__(self, count: int, listener_callback=None, work_assignment_callback=None):
-        self.units = [ProcessingUnit(i, listener_callback) for i in range(count)]
-        self.work_assignment_callback = work_assignment_callback
+    def __init__(self, count: int, waiting_queue: WaitingQueue, listener_callback=None):
+        self.waiting_queue = waiting_queue
+        self.units = [ProcessingUnit(i, listener_callback, self.assign_to_thread_listener) for i in range(count)]
 
     def start(self):
         for unit in self.units:
@@ -68,7 +72,15 @@ class ProcessingUnitManager:
         for unit in self.units:
             unit.stop(force)
 
-    def add_task(self, value):
-        # Add the task to the unit with the shortest queue
-        min_unit = min(self.units, key=lambda unit: unit.queue.qsize())
-        min_unit.add_task(value)
+    def assign_to_thread(self, unit: ProcessingUnit):
+        print(f"Assigning to unit {unit.id}.")
+        item = self.waiting_queue.get_item_from_queue()
+
+        if item:
+            unit.add_task(item.size)
+
+    def assign_to_thread_listener(self):
+        for unit in self.units:
+            if unit.queue.empty():
+                self.assign_to_thread(unit)
+                continue

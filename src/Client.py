@@ -23,7 +23,7 @@ class Client:
         self.items = [Item(random.random()*maxProcessingTime) for _ in range(itemsCount)]
 
     def get_item(self):
-        # Return the smallest itemT
+        # Return the smallest item
         return min(self.items, key=lambda x: x.size)
     
     def remove_item(self, item: Item):
@@ -37,12 +37,12 @@ class Client:
    
 
 class ClientVisualizer:
-    def __init__(self, ax: Axes):
+    def __init__(self, ax: Axes, *, colors = ['white', 'red', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']):
         self.ax = ax
 
         self.position = utils.PositionType(x0=0, y0=0, width=1, height=1)
 
-        self.colors = ['white', 'red', 'green', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray']
+        self.color = random.choice(colors)
 
         self.client = None
         self.shapes = []
@@ -58,12 +58,26 @@ class ClientVisualizer:
         x_text = x0 + w/2
         y_text = y0 + h/2
 
-        c = random.choice(self.colors)
+        c = self.color
         for i, item in enumerate(client.items):
             rect = patches.Rectangle((x0+i*w, y0), w, h, facecolor=c, fill=True, linewidth=1, edgecolor='black')
             self.shapes.append(rect)
             self.ax.add_patch(rect)
             self.texts.append(self.ax.text(x_text+i*w, y_text, f'{client.id}:{item}', ha='center', va='center'))
+    
+    def redraw(self):
+        for shape, text in zip(self.shapes, self.texts):
+            shape.remove()
+            text.remove()
+
+        self.shapes = []
+        self.texts = []
+
+        for i, item in enumerate(self.client.items):
+            rect = patches.Rectangle((self.position.x0+i*self.position.width, self.position.y0), self.position.width, self.position.height, facecolor=self.color, fill=True, linewidth=1, edgecolor='black')
+            self.shapes.append(rect)
+            self.ax.add_patch(rect)
+            self.texts.append(self.ax.text(self.position.x0+i*self.position.width+self.position.width/2, self.position.y0+self.position.height/2, f'{self.client.id}:{item}', ha='center', va='center'))
 
 
 class ClientFactory:

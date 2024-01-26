@@ -29,7 +29,7 @@ axd = fig.subplot_mosaic(
 progressBarAxis = ProgressBar(axd['progress_bar'], 'Thread', config['threads']['count'])
 
 # Set up the waiting queue axis
-waiting_queue = WaitingQueue(config['queue']['length'], config['queue']['size'])
+waiting_queue = WaitingQueue(config['queue']['length'], config['queue']['size'], 10)
 waiting_queue_visualizer = QueueVisualizer(axd['waiting_queue'], waiting_queue)
 
 # Set up the controls axis
@@ -57,12 +57,9 @@ slider = Slider(sliderAxis, 'Size', 1, 3, valinit=1, valstep=1)
 # textBoxAxis = fig.add_axes(list(button_size))
 # textBox = TextBox(textBoxAxis, '', initial='1', textalignment='center')
 
-
 # Configure the behavior
 def add_client_callback(event):
     waiting_queue.append_to_queue(slider.val)
-    client = waiting_queue.clients_queue[-1]
-    waiting_queue_visualizer.append_to_queue(client)
     
 addButton.on_clicked(add_client_callback)
 # textBox.label.set_visible(False)
@@ -70,13 +67,10 @@ addButton.on_clicked(add_client_callback)
 def plot_update_listener(id, value):
     progressBarAxis.set_bar(id, value)
 
-def assign_to_thread_listener():
-    client = waiting_queue.remove_from_queue()
-    if client:
-        item = client.items.pop(0)
-        manager.add_task(item.size)
+manager = ProcessingUnitManager(config['threads']['count'], waiting_queue=waiting_queue, listener_callback=plot_update_listener)
 
-manager = ProcessingUnitManager(config['threads']['count'], listener_callback=plot_update_listener, work_assignment_callback=assign_to_thread_listener)
+# Set the callback
+waiting_queue.set_on_first_item_added_callback(manager.assign_to_thread_listener)
 
 plt.show(block=False)
 manager.start()
@@ -86,6 +80,6 @@ while plt.fignum_exists(fig.number):
     fig.canvas.draw_idle()
 
     # Sleep for some time
-    plt.pause(0.016)
+    plt.pause(0.5) #.016 for 60 fps
 
 manager.stop(force=True)
