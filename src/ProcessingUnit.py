@@ -9,6 +9,7 @@ class ProcessingUnit:
         self.id = id
 
         self.listener_callback = listener_callback
+        self.actively_processing = False
 
         self.queue = Queue()
         self.thread = threading.Thread(target=self.process, daemon=True)
@@ -38,6 +39,7 @@ class ProcessingUnit:
         while not self.stop_signal.is_set():
             try:
                 value = self.queue.get(timeout=0.1)
+                self.actively_processing = True
                 print(f"Processing unit {self.id} got value {value}.")
             except Empty:
                 continue  # No item to process, check if still processing and try again
@@ -49,6 +51,7 @@ class ProcessingUnit:
                 if self.listener_callback:
                     self.listener_callback(self.id, value)  # Notify listener when processing
             
+            self.actively_processing = False
             print(f"Processing unit {self.id} finished processing.")
 
             if self.idle_callback:
@@ -58,6 +61,8 @@ class ProcessingUnit:
     def add_task(self, value):
         self.queue.put(value)
 
+    def get_active(self):
+        return self.actively_processing
 
 class ProcessingUnitManager:
     def __init__(self, count: int, waiting_queue: WaitingQueue, listener_callback=None):
@@ -97,6 +102,6 @@ class ProcessingUnitManager:
 
     def assign_to_thread_listener(self):
         for unit in self.units:
-            if unit.queue.empty():
+            if unit.queue.empty() and not unit.get_active():
                 self.assign_to_thread(unit)
                 continue
