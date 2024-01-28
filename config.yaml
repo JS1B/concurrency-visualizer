@@ -1,11 +1,12 @@
 debug: true
 
 threads:
-  count: 16
+  count: 5
 
 queue:
   length: 10
   size: 4
+  max_processing_time: 50
 
 visualizer:
   title: "Threads and Queues Visualisation"

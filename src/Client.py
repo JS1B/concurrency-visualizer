@@ -10,6 +10,9 @@ class Item:
         self.time_to_process = time_to_process
         self.file_size = math.pow(time_to_process, 3)
 
+    def get_time_to_process(self):
+        return self.time_to_process
+
     def __str__(self):
         size_in_kb = self.file_size
         units = ["KB", "MB", "GB", "TB"]  # Add more units if needed
@@ -35,6 +38,12 @@ class Client:
     def get_item(self):
         # Return the smallest item
         return min(self.items, key=lambda x: x.time_to_process)
+    
+    def get_items_count(self):
+        return len(self.items)
+    
+    def get_waiting_time(self):
+        return time.time() - self.start_time
     
     def remove_item(self, item: Item):
         self.items.remove(item)

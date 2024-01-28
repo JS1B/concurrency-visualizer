@@ -31,7 +31,7 @@ axd = fig.subplot_mosaic(
 progressBarAxis = ProgressBar(axd['progress_bar'], 'Thread', config['threads']['count'])
 
 # Set up the waiting queue axis
-waiting_queue = WaitingQueue(config['queue']['length'], config['queue']['size'], 100)
+waiting_queue = WaitingQueue(config['queue']['length'], config['queue']['size'], config['queue']['max_processing_time'])
 waiting_queue_visualizer = QueueVisualizer(axd['waiting_queue'], waiting_queue)
 
 # Set up the controls axis

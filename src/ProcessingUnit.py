@@ -1,5 +1,6 @@
 import threading
 import time
+import math
 
 from queue import Queue, Empty
 from src.WaitingQueue import WaitingQueue
@@ -56,7 +57,7 @@ class ProcessingUnit:
 
             if self.idle_callback:
                 self.idle_callback()
-            self.queue.task_done()  # Mark the task as done
+            self.queue.task_done() # Mark the task as done
             
     def add_task(self, value):
         self.queue.put(value)
@@ -78,6 +79,10 @@ class ProcessingUnitManager:
             unit.stop(force)
 
     def assign_to_thread(self, unit: ProcessingUnit):
+        def calculate_priority(f_size, time_in_q):
+            items_count_in_q = sum([client.get_items_count() for client in self.waiting_queue.get_clients_from_queue()])
+            return ((math.exp(time_in_q / items_count_in_q) - 1) + items_count_in_q / f_size)
+
         # print(f"Assigning to unit {unit.id}.")
         clients = self.waiting_queue.get_clients_from_queue()
         if not clients:
@@ -89,10 +94,10 @@ class ProcessingUnitManager:
         # Calculate the priority based on the item processing time and the client start time
         # The longer the waiting time, the higher the priority
         # The smaller the item processing time, the higher the priority
-        client_item = [(client, item, item.time_to_process / (time.time() - client.start_time)) for client, item in client_item]
+        client_item = [(client, item, calculate_priority(item.get_time_to_process(), client.get_waiting_time())) for client, item in client_item]
 
         # Get the client with the highest priority
-        client, item, _ = min(client_item, key=lambda x: x[2])
+        client, item, _ = max(client_item, key=lambda x: x[2])
 
         # Remove item from client
         self.waiting_queue.remove_from_queue(client, item)
