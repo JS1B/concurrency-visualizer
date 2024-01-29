@@ -11,3 +11,4 @@ queue:
 visualizer:
   title: "Threads and Queues Visualisation"
   title_font_size: 14
+  update_rate: 20 # times per second

@@ -78,6 +78,6 @@ while plt.fignum_exists(fig.number):
     fig.canvas.draw_idle()
 
     # Sleep for some time
-    plt.pause(0.2) #.016 for 60 fps
+    plt.pause(1/config['visualizer']['update_rate'])
 
 manager.stop(force=True)
