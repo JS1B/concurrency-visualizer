@@ -12,7 +12,7 @@ from src.ProgressBar import ProgressBar
 import src.utils as utils
 
 # Import configuration
-config = utils.load_config('config.yaml')
+config = utils.load_config()
 
 # Set up the plots
 fig = plt.figure('Concurrent programming', layout='constrained', figsize=(10, 6))

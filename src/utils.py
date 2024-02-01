@@ -1,9 +1,21 @@
 from dataclasses import dataclass
 
-def load_config(path='config.yaml'):
+def load_config(local_config_path='config.yaml'):
+    default_config_path = 'default_config.yaml'
     import yaml
-    with open(path, 'r') as f:
+    with open(default_config_path, 'r') as f:
         config = yaml.load(f.read(), Loader=yaml.FullLoader)
+
+    # Try to load config.yaml
+    try:
+        with open(local_config_path, 'r') as f:
+            local_config = yaml.load(f.read(), Loader=yaml.FullLoader)
+    except FileNotFoundError:
+        print('No config.yaml found, using default config.')
+
+    # Update config with local_config
+    config.update(local_config)
+    
     return config
 
 @dataclass
